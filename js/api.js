@@ -10,7 +10,7 @@
    gọi backend; chạy trên TÊN MIỀN THẬT → DEMO = false → gọi Apps Script thật.
    (Đặt ?demo=1 trên URL để ép DEMO khi cần trình diễn trên tên miền.)
    ───────────────────────────────────────────────────────────────────────── */
-window.GAS_URL = 'https://script.google.com/macros/s/AKfycbwdZ25rMzisd_11cJxtPfz1cXOb-MG44IVOAG88Xgu7nOQ_FHqYfL8OIhR62FI22S0Y/exec';
+window.GAS_URL = 'https://script.google.com/macros/s/AKfycbwpALObh8wlsFlt4_mIb96YkBfhplet9VOVa7x9TJmDkzphhG9ObmFhtQYAd-DHPcAY/exec';
 window.DEMO = !window.GAS_URL
   || ['localhost', '127.0.0.1', '::1', ''].indexOf(location.hostname) >= 0
   || /[?&]demo=1\b/.test(location.search);
