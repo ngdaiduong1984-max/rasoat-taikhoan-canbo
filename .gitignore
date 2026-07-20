@@ -1,0 +1,25 @@
+# ── TUYỆT ĐỐI KHÔNG commit dữ liệu cán bộ (repo public) ──
+*.xlsx
+*.xls
+*.csv
+*.docx
+*.doc
+
+# Bí mật / cấu hình triển khai
+.clasp.json
+*credentials*
+*.env
+.env*
+
+# Phụ thuộc / kết quả test
+node_modules/
+tests/.playwright/
+test-results/
+playwright-report/
+blob-report/
+
+# Hệ điều hành / trình soạn thảo
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

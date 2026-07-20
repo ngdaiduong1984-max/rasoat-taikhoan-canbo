@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rà soát tài khoản cán bộ · VP Đoàn ĐBQH và HĐND thành phố Hà Nội</title>
+<meta name="description" content="Hệ thống rà soát, cập nhật thông tin tài khoản cán bộ các xã, phường trực thuộc Văn phòng Đoàn ĐBQH và HĐND thành phố Hà Nội.">
+<link rel="icon" href="assets/quoc-huy.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══════════════ CHROME ══════════════ -->
+<header>
+  <div class="gov-util">
+    <div class="gov-util-in">
+      <div class="gov-util-l">
+        <a class="gov-util-link" href="admin.html">⚙ Quản trị</a>
+      </div>
+      <div class="gov-util-r"><span>Cổng rà soát tài khoản cán bộ</span></div>
+    </div>
+  </div>
+
+  <div class="gov-banner">
+    <div class="gov-banner-in">
+      <img class="gov-emblem" src="assets/quoc-huy.svg" alt="Quốc huy">
+      <div class="gov-titles">
+        <div class="gov-tt">Hội đồng nhân dân thành phố Hà Nội</div>
+        <div class="gov-org">Văn phòng Đoàn ĐBQH và HĐND thành phố Hà Nội</div>
+        <div class="gov-org-2">Rà soát &amp; cập nhật tài khoản cán bộ</div>
+      </div>
+      <div class="gov-spacer"></div>
+    </div>
+  </div>
+
+  <div class="gov-slogan">
+    <div class="gov-slogan-in">
+      <span class="gov-place">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        126 xã, phường · Thành phố Hà Nội
+      </span>
+      <span class="gov-deadline"><span class="dot"></span>Hạn nộp: <b id="han-nop">—</b> <span id="countdown"></span></span>
+      <span class="gov-motto">Chính xác · Trung thực · Đúng hạn</span>
+    </div>
+  </div>
+
+  <!-- Thanh bước (ẩn tới khi đăng nhập) -->
+  <div class="stepper hidden" id="stepper">
+    <div class="step" data-step="1"><span class="num">1</span><span class="step-lbl">Rà soát thông tin</span></div>
+    <div class="step" data-step="2"><span class="num">2</span><span class="step-lbl">Ảnh chữ ký</span></div>
+    <div class="step" data-step="3"><span class="num">3</span><span class="step-lbl">Gửi chính thức</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- ══════════════ MÀN 0 · ĐĂNG NHẬP ══════════════ -->
+  <section class="view active" id="man-dangnhap">
+    <div class="login-wrap">
+      <div class="login-card">
+        <h2>Đăng nhập đơn vị</h2>
+        <p class="sub">Chọn đơn vị, rồi nhập <b>tên đăng nhập</b> và <b>số điện thoại</b> của cán bộ phụ trách CNTT.</p>
+
+        <div class="field tim-donvi">
+          <label>Đơn vị (xã, phường) <span class="req">*</span></label>
+          <input type="text" id="o-tim" autocomplete="off" placeholder="Gõ tên đơn vị, không cần dấu — ví dụ: chuyen my">
+          <div class="tim-list" id="tim-list"></div>
+          <div class="hint">Có thể gõ không dấu; chọn đúng đơn vị trong danh sách gợi ý.</div>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Tên đăng nhập <span class="req">*</span></label>
+          <input type="text" id="o-taikhoan" autocomplete="off" placeholder="Tài khoản CNTT, ví dụ: nguyenvana_xaba">
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Số điện thoại (mật khẩu) <span class="req">*</span></label>
+          <input type="text" id="o-sdt" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="10 chữ số, bắt đầu bằng 0">
+        </div>
+
+        <div class="login-err" id="login-err"></div>
+
+        <button class="btn primary block lg" id="btn-dangnhap" style="margin-top:16px">Đăng nhập</button>
+        <p class="sub" style="margin:14px 0 0;font-size:12px">Nhập sai số điện thoại quá số lần cho phép, đơn vị sẽ tạm bị khoá trong ít phút.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ MÀN 1 · RÀ SOÁT ══════════════ -->
+  <section class="view" id="man-rasoat">
+    <div class="donvi-bar" id="rasoat-donvi"></div>
+
+    <div class="panel accent">
+      <div class="panel-h">
+        <span class="ix">1</span>
+        <div><h2>Rà soát thông tin cán bộ</h2>
+        <div class="panel-desc">Với mỗi cán bộ, chọn <b>Đúng</b> nếu thông tin chính xác, hoặc <b>Cần sửa</b> để chỉnh và ghi rõ thay đổi. Hệ thống hiển thị giá trị cũ để đối chiếu.</div></div>
+      </div>
+
+      <div class="tien-do">
+        <span id="rasoat-bar-txt">Đã rà soát 0/0 cán bộ</span>
+        <div class="bar"><i id="rasoat-bar"></i></div>
+      </div>
+
+      <div id="rasoat-list"></div>
+    </div>
+
+    <div class="actionbar">
+      <span class="status" id="rasoat-luu">Tự động lưu nháp</span>
+      <span class="grow"></span>
+      <button class="btn primary lg" id="btn-tieptuc" disabled>Tiếp tục → Ảnh chữ ký</button>
+    </div>
+  </section>
+
+  <!-- ══════════════ MÀN 2 · CHỮ KÝ (khung) ══════════════ -->
+  <section class="view" id="man-chuky">
+    <div class="panel accent">
+      <div class="panel-h"><span class="ix">2</span><div><h2>Ảnh chữ ký Chủ tịch HĐND</h2>
+      <div class="panel-desc">Chỉ áp dụng cho đơn vị có chức danh Chủ tịch HĐND.</div></div></div>
+      <div id="chuky-body"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ MÀN 3 · GỬI (khung) ══════════════ -->
+  <section class="view" id="man-gui">
+    <div class="panel accent">
+      <div class="panel-h"><span class="ix">3</span><div><h2>Gửi chính thức</h2>
+      <div class="panel-desc">Tổng kết và xác nhận gửi kết quả rà soát.</div></div></div>
+      <div id="gui-body"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<!-- ══════════════ SCRIPTS (thứ tự phụ thuộc) ══════════════ -->
+<script src="js/api.js"></script>
+<script src="js/dangnhap.js"></script>
+<script src="js/rasoat.js"></script>
+<script src="js/chuky.js"></script>
+<script>
+/* ---- Bootstrap + tiện ích giao diện chung ---- */
+(function () {
+  // Hạn nộp (đồng bộ với CauHinh HAN_NOP khi chạy thật). Giờ Việt Nam.
+  var HAN_NOP = new Date('2026-08-05T17:00:00+07:00');
+
+  window.UI = {
+    showBuoc: function (buoc) {
+      window.APP.buoc = buoc;
+      ['dangnhap', 'rasoat', 'chuky', 'gui'].forEach(function (b) {
+        document.getElementById('man-' + b).classList.toggle('active', b === buoc);
+      });
+      document.getElementById('stepper').classList.toggle('hidden', buoc === 'dangnhap');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    setStep: function (n) {
+      Array.prototype.forEach.call(document.querySelectorAll('.step'), function (el) {
+        var s = +el.getAttribute('data-step');
+        el.classList.toggle('active', s === n);
+        el.classList.toggle('done', s < n);
+      });
+    },
+    toast: function (msg, type) {
+      var t = document.getElementById('toast');
+      t.className = 'show' + (type ? ' ' + type : '');
+      t.textContent = msg;
+      clearTimeout(window._toastT);
+      window._toastT = setTimeout(function () { t.className = ''; }, 3200);
+    }
+  };
+
+  // Đếm ngược hạn nộp
+  function demNguoc() {
+    document.getElementById('han-nop').textContent =
+      ('0' + HAN_NOP.getDate()).slice(-2) + '/' + ('0' + (HAN_NOP.getMonth() + 1)).slice(-2) + '/' + HAN_NOP.getFullYear();
+    var el = document.getElementById('countdown');
+    var d = HAN_NOP - new Date();
+    if (d <= 0) { el.textContent = '(đã hết hạn)'; return; }
+    var ngay = Math.floor(d / 86400000), gio = Math.floor((d % 86400000) / 3600000);
+    el.textContent = '(còn ' + ngay + ' ngày ' + gio + ' giờ)';
+  }
+  demNguoc();
+  setInterval(demNguoc, 60000);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { window.DangNhap.init(); });
+  } else {
+    window.DangNhap.init();
+  }
+})();
+</script>
+</body>
+</html>

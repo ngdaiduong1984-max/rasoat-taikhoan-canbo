@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản trị · Rà soát tài khoản cán bộ</title>
+<link rel="icon" href="assets/quoc-huy.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <div class="gov-util"><div class="gov-util-in">
+    <div class="gov-util-l"><a class="gov-util-link" href="index.html">← Về trang rà soát</a></div>
+    <div class="gov-util-r"><span id="adm-user">Trang quản trị</span></div>
+  </div></div>
+  <div class="gov-banner"><div class="gov-banner-in">
+    <img class="gov-emblem" src="assets/quoc-huy.svg" alt="Quốc huy">
+    <div class="gov-titles">
+      <div class="gov-tt">Hội đồng nhân dân thành phố Hà Nội</div>
+      <div class="gov-org">Quản trị rà soát tài khoản</div>
+      <div class="gov-org-2">Văn phòng Đoàn ĐBQH và HĐND thành phố Hà Nội</div>
+    </div>
+    <div class="gov-spacer"></div>
+  </div></div>
+</header>
+
+<main>
+  <!-- Khoá đăng nhập -->
+  <section class="view active" id="man-lock">
+    <div class="login-card adm-lock">
+      <h2>Đăng nhập quản trị</h2>
+      <p class="sub">Nhập mật khẩu quản trị.</p>
+      <div class="field"><label>Mật khẩu <span class="req">*</span></label>
+        <input type="password" id="adm-mk" autocomplete="off" placeholder="Mật khẩu quản trị"></div>
+      <div class="login-err" id="adm-err"></div>
+      <button class="btn primary block lg" id="adm-vao" style="margin-top:16px">Vào quản trị</button>
+    </div>
+  </section>
+
+  <!-- Bảng điều khiển -->
+  <section class="view" id="man-adm">
+    <div class="adm-stats" id="adm-stats"></div>
+
+    <div class="adm-bar">
+      <div class="adm-chips" id="adm-chips">
+        <button class="chip on" data-loc="ALL">Tất cả</button>
+        <button class="chip" data-loc="CHUA_RA_SOAT">Chưa rà soát</button>
+        <button class="chip" data-loc="DANG_RA_SOAT">Đang rà soát</button>
+        <button class="chip" data-loc="DA_GUI">Đã gửi</button>
+      </div>
+      <input class="adm-search" id="adm-search" placeholder="Tìm đơn vị (gõ không dấu)…">
+      <button class="btn navy" id="adm-dondoc">Đôn đốc đơn vị đã chọn</button>
+      <button class="btn primary" id="adm-hopnhat">Hợp nhất &amp; dò trùng</button>
+    </div>
+
+    <div class="tbl-wrap"><div class="tbl-scroll">
+      <table class="adm">
+        <thead><tr>
+          <th style="width:34px"><input type="checkbox" id="adm-all"></th>
+          <th>Đơn vị</th><th>Trạng thái</th><th>Số người</th><th>Lỗi ban đầu</th>
+          <th>Chữ ký</th><th>Biên nhận</th><th>Thao tác</th>
+        </tr></thead>
+        <tbody id="adm-tbody"></tbody>
+      </table>
+    </div></div>
+    <p class="sub" id="adm-count" style="margin-top:10px;font-size:12.5px"></p>
+  </section>
+</main>
+
+<!-- Modal chi tiết -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-h">
+      <div class="grow"><h2 id="md-ten"></h2><div class="sub" id="md-meta" style="margin-top:4px"></div></div>
+      <button class="modal-close" id="md-close">×</button>
+    </div>
+    <div id="md-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/api.js"></script>
+<script>
+(function () {
+  window.DEMO = window.DEMO;   // dùng cờ DEMO từ api.js
+  var token = null, tatCa = [], loc = 'ALL', q = '';
+
+  var $ = function (id) { return document.getElementById(id); };
+  function toast(m, t) { var el = $('toast'); el.className = 'show' + (t ? ' ' + t : ''); el.textContent = m; clearTimeout(window._tt); window._tt = setTimeout(function () { el.className = ''; }, 3200); }
+  function esc(s) { return window.Util.escapeHtml(s); }
+  var TT = { CHUA_RA_SOAT: ['b-chua', 'Chưa rà soát'], DANG_RA_SOAT: ['b-dang', 'Đang rà soát'], DA_GUI: ['b-gui', 'Đã gửi'] };
+  var LOP_TEN = { CT: 'Chủ tịch HĐND', PCT: 'Phó Chủ tịch HĐND', BAN: 'Ban HĐND', CV: 'Chuyên viên', PCVP: 'Lãnh đạo/CV Văn phòng' };
+
+  /* ---- Đăng nhập ---- */
+  function vao() {
+    var mk = $('adm-mk').value;
+    $('adm-err').classList.remove('show');
+    if (!mk) { return; }
+    var b = $('adm-vao'); b.disabled = true; b.textContent = 'Đang kiểm tra…';
+    window.API.adminDangNhap(mk).then(function (kq) {
+      b.disabled = false; b.textContent = 'Vào quản trị';
+      if (!kq.ok) { $('adm-err').textContent = kq.loi; $('adm-err').classList.add('show'); return; }
+      token = kq.data.token; $('adm-mk').value = '';
+      $('adm-user').textContent = 'Quản trị viên · đã đăng nhập';
+      $('man-lock').classList.remove('active'); $('man-adm').classList.add('active');
+      taiTongQuan();
+    });
+  }
+
+  function taiTongQuan() {
+    $('adm-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#8A909A;padding:20px">Đang tải…</td></tr>';
+    window.API.adminTongQuan(token).then(function (kq) {
+      if (!kq.ok) { toast(kq.loi, 'err'); return; }
+      tatCa = kq.data.donVi || [];
+      renderStats(); render();
+    });
+  }
+
+  function renderStats() {
+    var c = { ALL: tatCa.length, CHUA_RA_SOAT: 0, DANG_RA_SOAT: 0, DA_GUI: 0 };
+    tatCa.forEach(function (d) { c[d.trangThai] = (c[d.trangThai] || 0) + 1; });
+    $('adm-stats').innerHTML =
+      stat('all', c.ALL, 'Tổng đơn vị') + stat('chua', c.CHUA_RA_SOAT, 'Chưa rà soát') +
+      stat('dang', c.DANG_RA_SOAT, 'Đang rà soát') + stat('gui', c.DA_GUI, 'Đã gửi');
+  }
+  function stat(cls, n, l) { return '<div class="adm-stat ' + cls + '"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>'; }
+
+  function locDS() {
+    return tatCa.filter(function (d) {
+      if (loc !== 'ALL' && d.trangThai !== loc) return false;
+      if (q && window.Util.khongDau(d.tenDonVi + ' ' + d.maDonVi).indexOf(q) < 0) return false;
+      return true;
+    });
+  }
+
+  function render() {
+    var ds = locDS();
+    $('adm-tbody').innerHTML = ds.length ? ds.map(function (d) {
+      var tt = TT[d.trangThai] || TT.CHUA_RA_SOAT;
+      return '<tr data-ma="' + d.maDonVi + '">' +
+        '<td><input type="checkbox" class="adm-ck" value="' + d.maDonVi + '"></td>' +
+        '<td><b>' + esc(d.tenDonVi) + '</b><br><span class="ma">' + esc(d.maDonVi) + '</span></td>' +
+        '<td><span class="badge ' + tt[0] + '">' + tt[1] + '</span></td>' +
+        '<td>' + d.soNguoi + '</td>' +
+        '<td>' + (d.soLoiBanDau > 0 ? '<span class="badge b-loi">' + d.soLoiBanDau + '</span>' : '0') + '</td>' +
+        '<td>' + (d.coChuKy ? '✓' : '—') + '</td>' +
+        '<td>' + (d.maBienNhan ? '<span class="ma">' + esc(d.maBienNhan) + '</span>' : '—') + '</td>' +
+        '<td><div class="adm-act">' +
+          '<button class="btn" data-xem="' + d.maDonVi + '">Xem</button>' +
+          (d.trangThai === 'DA_GUI' ? '<button class="btn ghost" data-mokhoa="' + d.maDonVi + '">Mở khoá</button>' : '') +
+        '</div></td></tr>';
+    }).join('') : '<tr><td colspan="8" style="text-align:center;color:#8A909A;padding:20px">Không có đơn vị phù hợp</td></tr>';
+    $('adm-count').textContent = 'Hiển thị ' + ds.length + '/' + tatCa.length + ' đơn vị';
+    $('adm-all').checked = false;
+  }
+
+  /* ---- Chi tiết cũ → mới ---- */
+  function xem(ma) {
+    window.API.adminChiTiet(token, ma).then(function (kq) {
+      if (!kq.ok) { toast(kq.loi, 'err'); return; }
+      var d = kq.data;
+      $('md-ten').textContent = d.donVi.tenDonVi + ' (' + d.donVi.maDonVi + ')';
+      var tt = TT[d.donVi.trangThai] || TT.CHUA_RA_SOAT;
+      $('md-meta').innerHTML = '<span class="badge ' + tt[0] + '">' + tt[1] + '</span>' +
+        (d.donVi.maBienNhan ? ' · Biên nhận: <b>' + esc(d.donVi.maBienNhan) + '</b>' : '');
+      var rows = d.danhSach.map(function (c) {
+        return '<tr>' +
+          '<td>' + esc(c.hoTen) + '<br><span class="ma">' + (LOP_TEN[c.lop] || c.lop) + '</span></td>' +
+          '<td><span class="ss-tt ' + c.trangThai + '">' + nhan(c.trangThai) + '</span></td>' +
+          '<td>' + soSanh(c, 'tenTaiKhoan') + soSanh(c, 'emailCongVu') + soSanh(c, 'soDienThoai') + '</td>' +
+          '<td>' + (c.canhBaoHeThong ? esc(c.canhBaoHeThong).split(' | ').join('<br>') : '—') +
+            (c.ghiChuDonVi ? '<br><i>Ghi chú: ' + esc(c.ghiChuDonVi) + '</i>' : '') + '</td>' +
+          '</tr>';
+      }).join('');
+      var ck = d.chuKy && d.chuKy.daTai
+        ? '<div class="ck-box"><b>Ảnh chữ ký:</b> ' + esc(d.chuKy.tenFile || '') + ' (' + (d.chuKy.dungLuongKB || '?') + ' KB) ' +
+          (d.chuKy.linkXem ? '· <a href="' + esc(d.chuKy.linkXem) + '" target="_blank" rel="noopener">Xem / tải trên Drive</a>' : '') + '</div>'
+        : '<div class="ck-box">Chưa có ảnh chữ ký.</div>';
+      $('md-body').innerHTML =
+        '<div class="tbl-scroll"><table class="ss-tbl"><thead><tr><th>Cán bộ</th><th>Kết luận</th><th>Thông tin (cũ → mới)</th><th>Cảnh báo / ghi chú</th></tr></thead><tbody>' +
+        rows + '</tbody></table></div>' + ck;
+      $('modal').classList.add('show');
+    });
+  }
+  function nhan(t) { return { DUNG: 'Giữ nguyên', SUA: 'Đã sửa', XOA: 'Không còn công tác', CHUA_RA_SOAT: 'Chưa rà soát' }[t] || t; }
+  function soSanh(c, f) {
+    var cu = c[f] || '', moi = c[f + '_Moi'] || '';
+    var nhanF = { tenTaiKhoan: 'TK', emailCongVu: 'Email', soDienThoai: 'ĐT' }[f];
+    if (c.trangThai === 'SUA' && moi && String(moi) !== String(cu))
+      return '<div><span class="ma">' + nhanF + ':</span> <span class="ss-cu">' + esc(cu) + '</span> → <span class="ss-moi">' + esc(moi) + '</span></div>';
+    return '<div><span class="ma">' + nhanF + ':</span> ' + esc(cu || '—') + '</div>';
+  }
+
+  /* ---- Mở khoá ---- */
+  function moKhoa(ma) {
+    if (!confirm('Mở khoá đơn vị ' + ma + '? Đơn vị sẽ được sửa và gửi lại.')) return;
+    window.API.adminMoKhoa(token, ma).then(function (kq) {
+      if (!kq.ok) { toast(kq.loi, 'err'); return; }
+      toast('Đã mở khoá ' + ma, 'ok'); taiTongQuan();
+    });
+  }
+
+  /* ---- Đôn đốc ---- */
+  function donDoc() {
+    var chon = Array.prototype.map.call(document.querySelectorAll('.adm-ck:checked'), function (c) { return c.value; });
+    if (!chon.length) { toast('Chưa chọn đơn vị nào để đôn đốc.', 'err'); return; }
+    if (!confirm('Gửi email đôn đốc tới ' + chon.length + ' đơn vị đã chọn?')) return;
+    window.API.adminDonDoc(token, chon).then(function (kq) {
+      if (!kq.ok) { toast(kq.loi, 'err'); return; }
+      var d = kq.data;
+      toast('Đôn đốc: đã gửi ' + d.daGui + (d.thatBai ? ', lỗi ' + d.thatBai : '') + (d.boQua ? ', bỏ qua ' + d.boQua : '') + (d.conLai ? '. Còn ' + d.conLai + ' đơn vị — bấm lại để gửi tiếp.' : ''), 'ok');
+    });
+  }
+
+  /* ---- Hợp nhất kết quả cuối + dò trùng chéo (Bước 5) ---- */
+  function hopNhat() {
+    if (!confirm('Hợp nhất kết quả cuối (SUA→lấy mới, DUNG→giữ gốc, XOA→loại bỏ) và dò trùng chéo toàn bộ đơn vị?\nKết quả ghi vào trang KetQuaCuoi.')) return;
+    var b = $('adm-hopnhat'); b.disabled = true; b.textContent = 'Đang hợp nhất…';
+    window.API.adminHopNhat(token).then(function (kq) {
+      b.disabled = false; b.textContent = 'Hợp nhất & dò trùng';
+      if (!kq.ok) { toast(kq.loi, 'err'); return; }
+      var d = kq.data;
+      $('md-ten').textContent = 'Kết quả hợp nhất & dò trùng chéo';
+      $('md-meta').innerHTML = '<b>' + d.soBanGhi + '</b> bản ghi cuối (đã loại các trường hợp không còn công tác) · <b>' + d.soDongTrung + '</b> dòng dính trùng';
+      var badge = function (n, l) { return '<span class="badge ' + (n ? 'b-loi' : 'b-gui') + '">' + n + '</span> ' + l; };
+      var vi = d.viDu && d.viDu.length ? '<table class="ss-tbl" style="margin-top:12px"><thead><tr><th>Loại trùng (giữa các đơn vị)</th><th>Giá trị</th><th>Các cán bộ liên quan</th></tr></thead><tbody>' +
+        d.viDu.map(function (v) { return '<tr><td>' + esc(v.loai) + '</td><td class="ma">' + esc(v.giaTri) + '</td><td>' + v.donVi.map(esc).join('<br>') + '</td></tr>'; }).join('') + '</tbody></table>'
+        : '<p class="sub" style="margin-top:12px">Không phát hiện trùng chéo giữa các đơn vị.</p>';
+      $('md-body').innerHTML =
+        '<div class="adm-stats" style="margin-bottom:0">' +
+          '<div class="adm-stat all"><div class="n">' + d.trung.email + '</div><div class="l">Nhóm email trùng</div></div>' +
+          '<div class="adm-stat dang"><div class="n">' + d.trung.tenTaiKhoan + '</div><div class="l">Nhóm tài khoản trùng</div></div>' +
+          '<div class="adm-stat gui"><div class="n">' + d.trung.soDienThoai + '</div><div class="l">Nhóm SĐT trùng</div></div>' +
+        '</div>' +
+        '<div class="ck-box" style="margin-top:14px">Đã ghi <b>' + d.soBanGhi + '</b> dòng vào trang <b>KetQuaCuoi</b> của Google Sheets.</div>' +
+        vi;
+      $('modal').classList.add('show');
+    });
+  }
+
+  /* ---- Sự kiện ---- */
+  $('adm-hopnhat').addEventListener('click', hopNhat);
+  $('adm-vao').addEventListener('click', vao);
+  $('adm-mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') vao(); });
+  $('adm-chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    loc = b.getAttribute('data-loc');
+    Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (c) { c.classList.toggle('on', c === b); });
+    render();
+  });
+  $('adm-search').addEventListener('input', function () { q = window.Util.khongDau(this.value); render(); });
+  $('adm-all').addEventListener('change', function () {
+    var on = this.checked;
+    Array.prototype.forEach.call(document.querySelectorAll('.adm-ck'), function (c) { c.checked = on; });
+  });
+  $('adm-tbody').addEventListener('click', function (e) {
+    var x = e.target.closest('[data-xem]'); if (x) { xem(x.getAttribute('data-xem')); return; }
+    var m = e.target.closest('[data-mokhoa]'); if (m) { moKhoa(m.getAttribute('data-mokhoa')); return; }
+  });
+  $('adm-dondoc').addEventListener('click', donDoc);
+  $('md-close').addEventListener('click', function () { $('modal').classList.remove('show'); });
+  $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) $('modal').classList.remove('show'); });
+})();
+</script>
+</body>
+</html>
