@@ -33,6 +33,8 @@ jobs:
           touch _site/.nojekyll   # tránh Jekyll bỏ qua tệp bắt đầu bằng "_"
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
