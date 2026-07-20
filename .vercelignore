@@ -1,0 +1,13 @@
+# Chỉ deploy trang tĩnh (index/admin/css/js/assets). Bỏ mọi thứ khác.
+node_modules
+tests
+apps-script
+.github
+.git
+*.xlsx
+*.csv
+*.docx
+*.md
+package.json
+package-lock.json
+playwright.config.js
