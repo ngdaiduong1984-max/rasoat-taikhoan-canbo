@@ -348,6 +348,32 @@ table.adm .ma{font-family:var(--font-serif);color:var(--ink-faint);font-size:12p
 .ss-tt.XOA{background:var(--paper-2);color:var(--ink-soft)} .ss-tt.CHUA_RA_SOAT{background:#fff;color:var(--ink-faint);border:1px solid var(--line)}
 .ck-box{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);font-size:13px}
 
+/* ═══════════════ TRANG HƯỚNG DẪN (huongdan.html) ═══════════════ */
+.hd-intro{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 22px;margin-bottom:18px}
+.hd-intro h1{font-size:clamp(18px,2.4vw,24px);font-weight:800;color:var(--primary-dark);text-transform:uppercase;line-height:1.25}
+.hd-intro .sub{color:var(--ink-soft);margin-top:8px;line-height:1.55}
+.hd-toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.hd-toc a{font-size:13px;font-weight:600;color:var(--primary-dark);background:var(--primary-soft);border:1px solid #F0CFD1;border-radius:99px;padding:5px 12px;text-decoration:none}
+.hd-toc a:hover{background:#F7DADB}
+
+.hd-step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:16px}
+.hd-step-h{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.hd-step-h .no{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:var(--primary);color:#fff;font-family:var(--font-serif);font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 0 var(--primary-dark)}
+.hd-step-h h2{font-size:17px;font-weight:800;padding-top:4px}
+.hd-body{font-size:14.5px;line-height:1.6;color:var(--ink)}
+.hd-body p{margin:0 0 10px}
+.hd-body ul{margin:0 0 10px;padding-left:20px}
+.hd-body li{margin:4px 0}
+.hd-body b{color:var(--primary-dark)}
+.hd-body .ok{color:var(--ok-dark);font-weight:700}
+.hd-body .no{color:var(--primary-dark);font-weight:700}
+
+/* Khung "minh họa" bọc quanh ảnh mô phỏng giao diện */
+.hd-mock{position:relative;border:1.5px dashed #D8CFB8;border-radius:var(--radius);background:#FCFBF8;padding:16px;margin:12px 0}
+.hd-mock::before{content:"▸ Minh họa giao diện";position:absolute;top:-10px;left:14px;background:var(--gold-deep);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px}
+.hd-mock .login-card{margin:6px auto 0;box-shadow:none}
+.hd-mask{letter-spacing:.06em}
+
 /* ---------- RESPONSIVE ---------- */
 @media(max-width:640px){
   .gov-emblem,.gov-spacer{width:52px;height:52px;flex-basis:52px}
