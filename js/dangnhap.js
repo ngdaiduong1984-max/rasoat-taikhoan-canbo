@@ -100,7 +100,8 @@ window.DangNhap = (function () {
   function dangNhap() {
     anLoi();
     if (!chon) { baoLoi('Vui lòng chọn đơn vị từ danh sách gợi ý.'); $tim.focus(); return; }
-    var tenDangNhap = $tk.value.trim();
+    // Chấp nhận cả khi gõ cả đuôi @hanoi.gov.vn — chỉ lấy phần trước dấu @
+    var tenDangNhap = $tk.value.trim().replace(/@.*$/, '');
     if (!tenDangNhap) { baoLoi('Vui lòng nhập tên đăng nhập của cán bộ phụ trách CNTT.'); $tk.focus(); return; }
     var sdt = $sdt.value.trim();
     var v = window.Validate.soDienThoai(sdt);

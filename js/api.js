@@ -136,8 +136,11 @@ window.API = (function () {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       redirect: 'follow'
-    }).then(function (r) { return r.text(); })
-      .then(function (t) {
+    }).then(function (r) { return r.arrayBuffer(); })
+      .then(function (buf) {
+        // ÉP giải mã UTF-8 tường minh — tránh lỗi font tiếng Việt trên iOS Safari
+        // (khi phản hồi không kèm charset, Safari đoán sai bảng mã).
+        var t = new TextDecoder('utf-8').decode(buf);
         try { return JSON.parse(t); }
         catch (e) { return { ok: false, loi: 'Máy chủ trả về dữ liệu không hợp lệ.' }; }
       })
