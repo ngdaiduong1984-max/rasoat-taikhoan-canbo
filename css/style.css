@@ -142,8 +142,9 @@ main{max-width:var(--maxw);margin:0 auto;padding:22px 18px 90px}
 .login-card .sub{text-align:center;color:var(--ink-soft);font-size:13px;margin:6px 0 18px}
 /* Ô tìm đơn vị (typeahead không dấu) */
 .tim-donvi{position:relative}
-.tim-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);max-height:260px;overflow:auto;z-index:20;display:none}
+.tim-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);max-height:320px;overflow:auto;z-index:20;display:none}
 .tim-list.show{display:block}
+.tim-count{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:6px 12px;font-size:11.5px;color:var(--ink-soft);font-weight:600}
 .tim-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;gap:10px;align-items:center}
 .tim-item:last-child{border-bottom:none}
 .tim-item:hover,.tim-item.hl{background:var(--primary-soft)}

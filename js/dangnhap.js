@@ -50,8 +50,9 @@ window.DangNhap = (function () {
   function onTim() {
     var q = window.Util.khongDau($tim.value);
     chon = null;                         // gõ lại thì bỏ lựa chọn cũ
-    if (!q) { loc = dsDonVi.slice(0, 8); }
-    else { loc = dsDonVi.filter(function (d) { return d.tenKhongDau.indexOf(q) > -1; }).slice(0, 12); }
+    // Hiện ĐỦ danh sách (không cắt bớt) — ô gợi ý tự cuộn khi dài
+    if (!q) { loc = dsDonVi.slice(); }
+    else { loc = dsDonVi.filter(function (d) { return d.tenKhongDau.indexOf(q) > -1; }); }
     hlIndex = -1;
     render();
   }
@@ -63,7 +64,7 @@ window.DangNhap = (function () {
       return;
     }
     var ttMap = { CHUA_RA_SOAT: ['tt-chua', 'Chưa rà soát'], DANG_RA_SOAT: ['tt-dang', 'Đang rà soát'], DA_GUI: ['tt-gui', 'Đã gửi'] };
-    $list.innerHTML = loc.map(function (d, i) {
+    $list.innerHTML = '<div class="tim-count">' + loc.length + ' đơn vị · cuộn để xem, gõ để lọc nhanh</div>' + loc.map(function (d, i) {
       var tt = ttMap[d.trangThai];   // danh mục cố định không có trạng thái → ẩn nhãn
       return '<div class="tim-item' + (i === hlIndex ? ' hl' : '') + '" data-i="' + i + '">' +
         '<span><b>' + window.Util.escapeHtml(d.tenDonVi) + '</b> <span class="ma">' + window.Util.escapeHtml(d.maDonVi) + '</span></span>' +
