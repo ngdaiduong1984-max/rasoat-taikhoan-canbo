@@ -346,17 +346,16 @@ window.API = (function () {
 
   return {
     goi: goi,
-    /* Danh sách 126 đơn vị cho ô tìm kiếm (doGet không tham số khi chạy thật). */
+    /* Danh mục đơn vị cho ô tìm kiếm.
+       - Chạy thật: dùng DANH_MUC_DV (126 đơn vị BAKE cố định) → KHÔNG truy vấn backend.
+       - DEMO: dùng các đơn vị mẫu để thử luồng. */
     dsDonVi: function () {
       if (window.DEMO) {
         return tre(window.DemoDB.donVi.map(function (d) {
           return { maDonVi: d.maDonVi, tenDonVi: d.tenDonVi, tenKhongDau: d.tenKhongDau, trangThai: d.trangThai };
         }));
       }
-      return fetch(window.GAS_URL, { method: 'GET' })
-        .then(function (r) { return r.json(); })
-        .then(function (j) { return (j && j.ok && j.data && j.data.donVi) || []; })
-        .catch(function () { return []; });
+      return tre((window.DANH_MUC_DV || []).slice());   // danh mục cố định, không có trạng thái động
     },
     dangNhap: function (maDonVi, tenDangNhap, matKhau) { return goi({ hanhDong: 'dangNhap', maDonVi: maDonVi, tenDangNhap: tenDangNhap, matKhau: matKhau }); },
     layDuLieu: function (token) { return goi({ hanhDong: 'layDuLieu', token: token }); },

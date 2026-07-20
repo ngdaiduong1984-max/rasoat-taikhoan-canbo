@@ -64,10 +64,10 @@ window.DangNhap = (function () {
     }
     var ttMap = { CHUA_RA_SOAT: ['tt-chua', 'Chưa rà soát'], DANG_RA_SOAT: ['tt-dang', 'Đang rà soát'], DA_GUI: ['tt-gui', 'Đã gửi'] };
     $list.innerHTML = loc.map(function (d, i) {
-      var tt = ttMap[d.trangThai] || ttMap.CHUA_RA_SOAT;
+      var tt = ttMap[d.trangThai];   // danh mục cố định không có trạng thái → ẩn nhãn
       return '<div class="tim-item' + (i === hlIndex ? ' hl' : '') + '" data-i="' + i + '">' +
         '<span><b>' + window.Util.escapeHtml(d.tenDonVi) + '</b> <span class="ma">' + window.Util.escapeHtml(d.maDonVi) + '</span></span>' +
-        '<span class="tt ' + tt[0] + '">' + tt[1] + '</span></div>';
+        (tt ? '<span class="tt ' + tt[0] + '">' + tt[1] + '</span>' : '') + '</div>';
     }).join('');
     $list.classList.add('show');
     Array.prototype.forEach.call($list.querySelectorAll('.tim-item'), function (el) {

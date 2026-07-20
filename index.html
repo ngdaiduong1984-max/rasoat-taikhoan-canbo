@@ -30,7 +30,7 @@
       <div class="gov-titles">
         <div class="gov-tt">Hội đồng nhân dân thành phố Hà Nội</div>
         <div class="gov-org">Văn phòng Đoàn ĐBQH và HĐND thành phố Hà Nội</div>
-        <div class="gov-org-2">Rà soát &amp; cập nhật tài khoản cán bộ</div>
+        <div class="gov-org-2">Rà soát &amp; cập nhật tài khoản tham dự tập huấn</div>
       </div>
       <div class="gov-spacer"></div>
     </div>
@@ -42,7 +42,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
         126 xã, phường · Thành phố Hà Nội
       </span>
-      <span class="gov-deadline"><span class="dot"></span>Hạn nộp: <b id="han-nop">—</b> <span id="countdown"></span></span>
+      <span class="gov-deadline" id="gov-deadline"><span class="dot"></span>Hạn hoàn thành: <b id="han-nop">—</b> <span id="countdown"></span></span>
       <span class="gov-motto">Chính xác · Trung thực · Đúng hạn</span>
     </div>
   </div>
@@ -136,6 +136,7 @@
 <div id="toast"></div>
 
 <!-- ══════════════ SCRIPTS (thứ tự phụ thuộc) ══════════════ -->
+<script src="js/danhmuc.js"></script>
 <script src="js/api.js"></script>
 <script src="js/dangnhap.js"></script>
 <script src="js/rasoat.js"></script>
@@ -143,8 +144,9 @@
 <script>
 /* ---- Bootstrap + tiện ích giao diện chung ---- */
 (function () {
-  // Hạn nộp (đồng bộ với CauHinh HAN_NOP khi chạy thật). Giờ Việt Nam.
-  var HAN_NOP = new Date('2026-08-05T17:00:00+07:00');
+  // Hạn hoàn thành: ĐỂ TRỐNG (không ấn định). Đặt ngày (vd '2026-08-05T17:00:00+07:00')
+  // để hiện đếm ngược; để null thì ẩn hẳn pill hạn.
+  var HAN_NOP = null;
 
   window.UI = {
     showBuoc: function (buoc) {
@@ -171,8 +173,10 @@
     }
   };
 
-  // Đếm ngược hạn nộp
+  // Đếm ngược hạn hoàn thành (ẩn hẳn nếu không ấn định)
   function demNguoc() {
+    var pill = document.getElementById('gov-deadline');
+    if (!HAN_NOP) { if (pill) pill.style.display = 'none'; return; }
     document.getElementById('han-nop').textContent =
       ('0' + HAN_NOP.getDate()).slice(-2) + '/' + ('0' + (HAN_NOP.getMonth() + 1)).slice(-2) + '/' + HAN_NOP.getFullYear();
     var el = document.getElementById('countdown');
@@ -182,7 +186,7 @@
     el.textContent = '(còn ' + ngay + ' ngày ' + gio + ' giờ)';
   }
   demNguoc();
-  setInterval(demNguoc, 60000);
+  if (HAN_NOP) setInterval(demNguoc, 60000);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { window.DangNhap.init(); });
