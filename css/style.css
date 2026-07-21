@@ -187,6 +187,10 @@ main{max-width:var(--maxw);margin:0 auto;padding:22px 18px 90px}
 .canh-bao{margin-top:9px;display:flex;flex-direction:column;gap:5px}
 .canh-bao .cb-item{background:var(--warn-soft);border:1px solid #EBD3AE;color:#8A5A10;border-radius:var(--radius-sm);padding:6px 10px;font-size:12.5px;font-weight:600;display:flex;align-items:flex-start;gap:7px}
 .canh-bao .cb-item::before{content:"⚠";flex:0 0 auto}
+/* Cảnh báo TRÙNG: chỉ để kiểm tra (thông tin, không bắt buộc) — tông xanh */
+.canh-bao .cb-item.info{background:var(--add-soft);border-color:#B9D3E6;color:var(--add)}
+.canh-bao .cb-item.info::before{content:"ℹ"}
+.canh-bao .cb-note{font-weight:500;opacity:.85}
 
 /* Cặp nút Đúng / Sai */
 .seg-ds{display:flex;gap:10px;margin-top:12px}

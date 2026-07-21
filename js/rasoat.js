@@ -22,9 +22,16 @@ window.RaSoat = (function () {
     { key: 'tk',    re: /tài khoản/i,    goc: 'tenTaiKhoan', moi: 'tenTaiKhoan_Moi', validate: 'tenTaiKhoan' }
   ];
   function coCanhBao(c) { return !!(c.canhBaoHeThong && c.canhBaoHeThong.trim()); }
-  // Trường được đánh dấu "• cần sửa" (gợi ý trường liên quan tới cảnh báo)
+  function dsCanhBao(c) {
+    return (c.canhBaoHeThong || '').split(' | ').map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  // Cảnh báo TRÙNG = CHỈ để kiểm tra (không bắt buộc đổi). Còn lại = BẮT BUỘC sửa.
+  function laBatBuoc(w) { return w.toLowerCase().indexOf('trùng') < 0; }
+  function coCanhBaoBatBuoc(c) { return dsCanhBao(c).some(laBatBuoc); }
+
+  // Trường đánh dấu "• cần sửa" — chỉ theo cảnh báo BẮT BUỘC (không tính trùng)
   function truongCanSua(c) {
-    var w = c.canhBaoHeThong || '';
+    var w = dsCanhBao(c).filter(laBatBuoc).join(' | ');
     return CANHBAO_FIELD.filter(function (f) { return f.re.test(w); });
   }
   // Giá trị HIỆN TẠI của một trường (đã sửa nếu có, ngược lại là giá trị gốc)
@@ -32,19 +39,12 @@ window.RaSoat = (function () {
     var moi = c[goc + '_Moi'];
     return (moi !== undefined && moi !== null && moi !== '') ? String(moi) : String(c[goc] || '');
   }
-  // Xét MỘT cảnh báo đã được xử lý xong chưa, theo GIÁ TRỊ HIỆN TẠI.
+  // Xét MỘT cảnh báo BẮT BUỘC đã xử lý xong chưa, theo GIÁ TRỊ HIỆN TẠI.
   function motCanhBaoXong(w, c) {
     var lw = w.toLowerCase(), V = window.Validate;
     var email = giaTriHienTai(c, 'emailCongVu');
     var tk = giaTriHienTai(c, 'tenTaiKhoan');
     var sdt = giaTriHienTai(c, 'soDienThoai');
-    // Trùng chéo: client không kiểm được toàn hệ thống → yêu cầu ĐỔI khác gốc + hợp lệ
-    if (lw.indexOf('trùng') >= 0) {
-      if (lw.indexOf('email') >= 0) return V.emailCongVu(email).ok && email !== String(c.emailCongVu || '');
-      if (lw.indexOf('điện thoại') >= 0) return V.soDienThoai(sdt).ok && sdt !== String(c.soDienThoai || '');
-      if (lw.indexOf('tài khoản') >= 0) return V.tenTaiKhoan(tk).ok && tk !== String(c.tenTaiKhoan || '');
-      return true;
-    }
     // "Email không khớp tên tài khoản": chỉ cần sửa cho KHỚP (đổi email HOẶC tài khoản đều được)
     if (lw.indexOf('không khớp') >= 0) {
       return V.emailCongVu(email).ok && V.tenTaiKhoan(tk).ok
@@ -56,16 +56,14 @@ window.RaSoat = (function () {
     if (lw.indexOf('tài khoản') >= 0) return V.tenTaiKhoan(tk).ok;
     return true;   // cảnh báo lạ → không chặn
   }
-  // Danh sách cảnh báo CHƯA xử lý xong
+  // Danh sách cảnh báo BẮT BUỘC còn CHƯA xử lý xong (trùng không tính)
   function canhBaoConLai(c) {
-    if (!coCanhBao(c)) return [];
-    return (c.canhBaoHeThong || '').split(' | ').map(function (s) { return s.trim(); })
-      .filter(Boolean).filter(function (w) { return !motCanhBaoXong(w, c); });
+    return dsCanhBao(c).filter(laBatBuoc).filter(function (w) { return !motCanhBaoXong(w, c); });
   }
   function daXuLyCanhBao(c) {
-    if (!coCanhBao(c)) return true;
-    if (c.trangThai === 'XOA') return true;             // không còn công tác → chấp nhận
-    if (c.trangThai !== 'SUA') return false;            // buộc phải "Cần sửa"
+    if (!coCanhBaoBatBuoc(c)) return true;   // không có cảnh báo bắt buộc → không chặn
+    if (c.trangThai === 'XOA') return true;  // không còn công tác → chấp nhận
+    if (c.trangThai !== 'SUA') return false; // buộc phải "Cần sửa"
     return canhBaoConLai(c).length === 0;
   }
 
@@ -122,11 +120,15 @@ window.RaSoat = (function () {
     var stClass = c.trangThai === 'DUNG' ? 'st-dung' : c.trangThai === 'SUA' ? 'st-sua' : c.trangThai === 'XOA' ? 'st-xoa' : '';
     var lopLbl = LOP_TEN[c.lop] || c.lop;
     var lopClass = c.lop === 'CT' ? 'cb-lop lop-ct' : 'cb-lop';
-    var canhBao = (c.canhBaoHeThong || '').split(' | ').filter(function (x) { return x.trim(); });
+    var canhBao = dsCanhBao(c);
     var cbHTML = canhBao.length
-      ? '<div class="canh-bao">' + canhBao.map(function (w) { return '<div class="cb-item">' + window.Util.escapeHtml(w) + '</div>'; }).join('') + '</div>'
+      ? '<div class="canh-bao">' + canhBao.map(function (w) {
+          var info = !laBatBuoc(w);   // trùng → chỉ để kiểm tra
+          return '<div class="cb-item' + (info ? ' info' : '') + '">' + window.Util.escapeHtml(w) +
+            (info ? ' <span class="cb-note">— chỉ để kiểm tra, không bắt buộc đổi</span>' : '') + '</div>';
+        }).join('') + '</div>'
       : '';
-    var warn = coCanhBao(c);   // hàng có cảnh báo → khoá nút "Đúng"
+    var warn = coCanhBaoBatBuoc(c);   // chỉ cảnh báo BẮT BUỘC mới khoá nút "Đúng"
     return '' +
       '<div class="can-bo ' + stClass + '" id="cb-' + c.id + '" data-id="' + c.id + '">' +
       '<div class="cb-head">' +
@@ -208,7 +210,7 @@ window.RaSoat = (function () {
     var hd = btn.getAttribute('data-hd');
     var editEl = $list.querySelector('[data-edit="' + c.id + '"]');
     if (hd === 'dung') {
-      if (btn.disabled || coCanhBao(c)) {   // hàng có cảnh báo: không cho "Đúng"
+      if (btn.disabled || coCanhBaoBatBuoc(c)) {   // chỉ cảnh báo BẮT BUỘC mới chặn "Đúng"
         window.UI.toast('Thông tin đang có cảnh báo, bắt buộc chọn “Cần sửa” và sửa lại.', 'err');
         return;
       }
@@ -355,8 +357,8 @@ window.RaSoat = (function () {
     else if (c.trangThai === 'XOA') card.classList.add('st-xoa');
     card.querySelector('.b-dung').classList.toggle('on', c.trangThai === 'DUNG');
     card.querySelector('.b-sai').classList.toggle('on', c.trangThai === 'SUA' || c.trangThai === 'XOA');
-    // hàng có cảnh báo đã xử lý xong → đánh dấu xanh
-    card.classList.toggle('da-xuly', coCanhBao(c) && daXuLyCanhBao(c));
+    // hàng có cảnh báo BẮT BUỘC đã xử lý xong → đánh dấu xanh
+    card.classList.toggle('da-xuly', coCanhBaoBatBuoc(c) && daXuLyCanhBao(c));
   }
 
   function daRaSoat(c) { return c.trangThai && c.trangThai !== 'CHUA_RA_SOAT'; }
