@@ -22,20 +22,51 @@ window.RaSoat = (function () {
     { key: 'tk',    re: /tài khoản/i,    goc: 'tenTaiKhoan', moi: 'tenTaiKhoan_Moi', validate: 'tenTaiKhoan' }
   ];
   function coCanhBao(c) { return !!(c.canhBaoHeThong && c.canhBaoHeThong.trim()); }
+  // Trường được đánh dấu "• cần sửa" (gợi ý trường liên quan tới cảnh báo)
   function truongCanSua(c) {
     var w = c.canhBaoHeThong || '';
     return CANHBAO_FIELD.filter(function (f) { return f.re.test(w); });
   }
-  function truongDaSua(c, f) {
-    var moi = c[f.moi]; moi = (moi === undefined || moi === null) ? '' : moi;
-    if (String(moi) === String(c[f.goc] || '')) return false;      // phải ĐỔI khác giá trị gốc bị cảnh báo
-    return window.Validate[f.validate](moi).ok;                     // và phải HỢP LỆ
+  // Giá trị HIỆN TẠI của một trường (đã sửa nếu có, ngược lại là giá trị gốc)
+  function giaTriHienTai(c, goc) {
+    var moi = c[goc + '_Moi'];
+    return (moi !== undefined && moi !== null && moi !== '') ? String(moi) : String(c[goc] || '');
+  }
+  // Xét MỘT cảnh báo đã được xử lý xong chưa, theo GIÁ TRỊ HIỆN TẠI.
+  function motCanhBaoXong(w, c) {
+    var lw = w.toLowerCase(), V = window.Validate;
+    var email = giaTriHienTai(c, 'emailCongVu');
+    var tk = giaTriHienTai(c, 'tenTaiKhoan');
+    var sdt = giaTriHienTai(c, 'soDienThoai');
+    // Trùng chéo: client không kiểm được toàn hệ thống → yêu cầu ĐỔI khác gốc + hợp lệ
+    if (lw.indexOf('trùng') >= 0) {
+      if (lw.indexOf('email') >= 0) return V.emailCongVu(email).ok && email !== String(c.emailCongVu || '');
+      if (lw.indexOf('điện thoại') >= 0) return V.soDienThoai(sdt).ok && sdt !== String(c.soDienThoai || '');
+      if (lw.indexOf('tài khoản') >= 0) return V.tenTaiKhoan(tk).ok && tk !== String(c.tenTaiKhoan || '');
+      return true;
+    }
+    // "Email không khớp tên tài khoản": chỉ cần sửa cho KHỚP (đổi email HOẶC tài khoản đều được)
+    if (lw.indexOf('không khớp') >= 0) {
+      return V.emailCongVu(email).ok && V.tenTaiKhoan(tk).ok
+        && email.toLowerCase() === tk.toLowerCase() + '@hanoi.gov.vn';
+    }
+    // Lỗi định dạng (dấu/chữ hoa/sai tên miền/thiếu…): chỉ cần giá trị HỢP LỆ là xong
+    if (lw.indexOf('email') >= 0) return V.emailCongVu(email).ok;
+    if (lw.indexOf('điện thoại') >= 0) return V.soDienThoai(sdt).ok;
+    if (lw.indexOf('tài khoản') >= 0) return V.tenTaiKhoan(tk).ok;
+    return true;   // cảnh báo lạ → không chặn
+  }
+  // Danh sách cảnh báo CHƯA xử lý xong
+  function canhBaoConLai(c) {
+    if (!coCanhBao(c)) return [];
+    return (c.canhBaoHeThong || '').split(' | ').map(function (s) { return s.trim(); })
+      .filter(Boolean).filter(function (w) { return !motCanhBaoXong(w, c); });
   }
   function daXuLyCanhBao(c) {
     if (!coCanhBao(c)) return true;
-    if (c.trangThai === 'XOA') return true;                        // không còn công tác → chấp nhận
-    if (c.trangThai !== 'SUA') return false;                       // buộc phải "Cần sửa"
-    return truongCanSua(c).every(function (f) { return truongDaSua(c, f); });
+    if (c.trangThai === 'XOA') return true;             // không còn công tác → chấp nhận
+    if (c.trangThai !== 'SUA') return false;            // buộc phải "Cần sửa"
+    return canhBaoConLai(c).length === 0;
   }
 
   function batDau() {
@@ -211,17 +242,17 @@ window.RaSoat = (function () {
     capNhatCanSua(card, c);
   }
 
-  /* Ẩn/hiện dòng "bắt buộc sửa" cho từng trường theo trạng thái đã sửa xong chưa. */
+  /* Ẩn/hiện dòng "bắt buộc sửa" cho từng trường — chỉ nhắc trường CÒN liên quan
+     tới cảnh báo CHƯA xử lý (XOA hoặc đã xong thì không nhắc). */
   function capNhatCanSua(card, c) {
-    var xong = daXuLyCanhBao(c);   // XOA hoặc đã sửa xong → không nhắc nữa
+    var conLaiText = (c.trangThai === 'XOA' ? [] : canhBaoConLai(c)).join(' | ').toLowerCase();
     truongCanSua(c).forEach(function (f) {
       var el = card.querySelector('[data-cansua="' + f.moi + '"]');
       if (!el) return;
-      if (xong) { el.classList.remove('show'); return; }
       var loiEl = card.querySelector('.loi-o[data-loi="' + f.moi + '"]');
       var coLoi = loiEl && loiEl.classList.contains('show');
-      // hiện nhắc khi CHƯA sửa xong và KHÔNG có lỗi định dạng đang hiện (tránh trùng thông báo)
-      el.classList.toggle('show', !truongDaSua(c, f) && !coLoi);
+      // hiện nhắc khi trường này còn dính cảnh báo chưa xử lý và không có lỗi định dạng đang hiện
+      el.classList.toggle('show', f.re.test(conLaiText) && !coLoi);
     });
   }
 
